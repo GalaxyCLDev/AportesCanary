@@ -1,13 +1,13 @@
 local config = {
     actionId = 56501,
     storageBase = 880110,
-    successMessages = "Recibiste Mejoras de los Dioses.",
-    successSay = "Me siento mucho mas fuerte!",
-    successEffect = CONST_ME_MAGIC_GREEN,
-    failMessage = "tu ya tienes el buffo!",
-    failEffect = CONST_ME_MAGIC_RED,
-	noStorageMessage = "You do not have the required storage value to step here.", -- Mensaje de error
-    rewards = {
+    siObtieneLosBuffos = "Recibiste Mejoras de los Dioses.",
+    mensajeDelJugador = "Me siento mucho mas fuerte!",
+    efectoCuandoObtengaElBuffo = CONST_ME_MAGIC_GREEN,
+    mensajeDeFallo = "tu ya tienes el buffo!",
+    efectoDeFallo = CONST_ME_MAGIC_RED,
+	storageNecesario = "Tu no tienes la quest completada o mision.", -- Mensaje de error
+    skillQueObtendran = {
         { type = SKILL_SWORD, value = 3 },
         { type = SKILL_AXE, value = 3 },
         { type = SKILL_CLUB, value = 3 },
@@ -74,7 +74,7 @@ local function setCustomSkillLevel(player, index, skillId, value)
 end
 
 local function removeDarkEnergyConditions(player)
-    for index, _ in ipairs(config.rewards) do
+    for index, _ in ipairs(config.skillQueObtendran) do
         player:removeCondition(CONDITION_ATTRIBUTES, CONDITIONID_DEFAULT, config.storageBase + index)
     end
     player:setStorageValue(config.storageBase, 0)
@@ -84,16 +84,16 @@ end
 local function addPlayerDarkEnergy(player, fromPosition)
     if player:getStorageValue(config.storageBase) ~= 1 then
         player:setStorageValue(config.storageBase, 1)
-        for index, reward in ipairs(config.rewards) do
+        for index, reward in ipairs(config.skillQueObtendran) do
             setCustomSkillLevel(player, index, reward.type, reward.value)
         end
-        player:getPosition():sendMagicEffect(config.successEffect)
-        player:sendTextMessage(MESSAGE_EVENT_ADVANCE, config.successMessages)
-        player:say(config.successSay, TALKTYPE_MONSTER_SAY)
+        player:getPosition():sendMagicEffect(config.efectoCuandoObtengaElBuffo)
+        player:sendTextMessage(MESSAGE_EVENT_ADVANCE, config.siObtieneLosBuffos)
+        player:say(config.mensajeDelJugador, TALKTYPE_MONSTER_SAY)
     else
         player:teleportTo(fromPosition)
-        player:sendTextMessage(MESSAGE_EVENT_ADVANCE, config.failMessage)
-        player:getPosition():sendMagicEffect(config.failEffect)
+        player:sendTextMessage(MESSAGE_EVENT_ADVANCE, config.mensajeDeFallo)
+        player:getPosition():sendMagicEffect(config.efectoDeFallo)
     end
 end
 
@@ -107,10 +107,12 @@ function moveevent.onStepIn(creature, item, pos, fromPosition)
 
     print("El jugador piso el SQM")
 
-  --  local requiredStorageValue = 40067
+--- AQUI PUEDES DESCOMENTAR TODO ESTO PARA QUE LOS JUGADORES TENGAN QUE REALIZAR UNA QUEST PARA USAR EL SQM.
+
+  --  local requiredStorageValue = 40067 --- aqui el storage o nombre de la quest que deben realizar.
    -- if player:getStorageValue(requiredStorageValue) ~= 1 then
     --    print("El jugador no puede PISAR debido al valor de almacenamiento NO LO TIENE")
---		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, config.noStorageMessage) -- Enviar mensaje de error
+--		player:sendTextMessage(MESSAGE_EVENT_ADVANCE, config.storageNecesario) -- Enviar mensaje de error
  --       return false
  --   end
 
@@ -127,7 +129,7 @@ local creatureEvent = CreatureEvent("DarkEnergyLoad")
 
 function creatureEvent.onLogin(player)
     if player:getStorageValue(config.storageBase) == 1 then
-        for index, reward in ipairs(config.rewards) do
+        for index, reward in ipairs(config.skillQueObtendran) do
             local value = getCustomSkillLevel(player, index)
             if value ~= 0 then
                 setCustomSkillLevel(player, index, reward.type, value)
@@ -156,3 +158,13 @@ function deathEvent.onDeath(player, corpse, killer, mostDamageKiller, lastHitUnj
 end
 
 deathEvent:register()
+
+
+
+-- tambien debes registrar en login_events.lua lo siguiente
+
+-- DarkEnergyLoad,
+-- DarkEnergyLogout,
+-- DarkEnergyDeath,
+
+-- tambien puedes quitar todos los "print" ya que los use para verificar que todo funcione bien.
